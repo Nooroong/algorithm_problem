@@ -2,74 +2,56 @@
 #include <stdlib.h>
 
 /*
-49m 00s
-
-DFS 함수에서 depth 매개변수를 통해 희현이부터 주경이까지 이동(?)하기 위한 횟수를 기억한다.
-
-사람이 n명일 때, 조건에 따라 생성될 수 있는 간선의 수는 n개.
-함수를 n번 호출했는데도 원하는 노드를 찾지 못했다면,
-내가 원하는 노드는 해당 사이클 내에 없고 떨어진 다른 사이클에 있다는 의미.
-그러므로 depth의 크기를 보고 프로그램을 종료할 순간을 찾는다.
-(이 부분에 대해 신경쓰지 않으면 무한루프에 빠지게 된다.)
-
-0을 출력하게 되는 테스트 케이스
-1
-7
-4
-5
-2
-2
-3
-7
-6
+그냥 어렵게 생각할 필요없고 반복문으로 풀어도 된다.
+구현문제라고 생각하고 그냥 지명한 숫자대로 따라가면 된다.
 */
-
-void DFS(int arr[], int idx, int len, int depth);
 
 int main(void)
 {
-    int t;
-    int n;
-    int i, j, tmp;
+    int T;
+    int n; // 주경이는 n번이다.
+    int * call;
+    int i, j;
 
-    int * edge; // 지명한 사람의 숫자 정보가 저장됨.
-    int * visited; // 방문 정보
+    int callCnt; // 지명 횟수.
+    int callIdx; // 지명권한을 가지고 있는 사람번호 - 1
+    int findFlag;
 
-    scanf("%d", &t);
-    edge = (int *)malloc(sizeof(int) * (n+1));
+    
+    scanf("%d", &T);
 
-    for(i = 0 ; i < t; i++)
+    for(i = 0; i < T; i++)
     {
         scanf("%d", &n);
 
+        call = (int*)malloc(sizeof(int) * n);
         for(j = 0; j < n; j++)
+            scanf("%d", &call[j]);
+
+        callCnt = 1; // 무조건 한 번은 지명하므로 1부터 시작.
+        callIdx = 0;
+        findFlag = 0;
+
+ 
+        while(callCnt <= n)
         {
-            scanf("%d", &tmp);
-            edge[j+1] = tmp; // 편의를 위해 1번 인덱스부터 사용.
+            if(call[callIdx] != n)
+            {
+                callCnt++;
+                callIdx = call[callIdx] - 1; // 지명 권한(?)이 다음 사람에게 넘어감.
+            }
+            else
+            {
+                findFlag = 1;
+                break;
+            }
         }
 
-        DFS(edge, 1, n, 0);
+        printf("%d\n", findFlag==1 ? callCnt : 0);
+        
+        free(call);
     }
+    
 
     return 0;
-}
-
-void DFS(int arr[], int idx, int len, int depth)
-{
-    
-    if(depth > len)
-    {
-        printf("0\n");
-        return;
-    }
-
-
-    if(idx == len) // 주경이를 찾으면 최소 숫자 k 출력.
-    {
-        printf("%d\n", depth);
-        return;
-    }
-    else
-        DFS(arr, arr[idx], len, depth+1);
-    
 }
