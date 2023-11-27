@@ -1,7 +1,8 @@
 # 50만개
 # 순차 탐색을 이용하면 최악의 경우 O(n*m) = 2500억번 연산
 # card를 정렬해서 이분탐색을 쓰는 경우
-# : O(n*logn + m*n*logn) = O((1+m)*n*logn) = 50만 * 50만 * 19??
+# (수정: 이진탐색의 시간복잡도는 O(logn)이다. 어쩐지 이상했다…)
+# : O(n*logn + m*logn) = O((n+m)*logn) ≈ 100만 * 19 ≈ 1900만번 연산
 
 n = int(input())
 card = list(map(int, input().split()))
