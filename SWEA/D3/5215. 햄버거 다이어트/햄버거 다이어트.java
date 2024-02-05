@@ -25,6 +25,7 @@ public class Solution {
 	
 	public static int maxTaste; // 최고 맛점수
 	
+	public static int[][] selectElementList; // 내가 선택한 원소들을 담아놓는 배열. 맛과 칼로리 순서로 담는다.
 	public static boolean[] elementUsedCheckList; // 원소의 사용여부를 체크하는 배열
 	
 	
@@ -54,43 +55,57 @@ public class Solution {
 			}
 			
 			// 4-1. 조합으로 푼다.
-//			maxTaste = 0;
-//			combination(0, 0, 0);
-//			sb.append("#").append(tc).append(" ").append(maxTaste);
-//			System.out.println(sb);
-//			sb.setLength(0);
-			
-			// 4-2. 부분집합으로 푼다.
-			elementUsedCheckList = new boolean[numOfIngre];
+			selectElementList = new int[numOfIngre][2];
 			maxTaste = 0;
-			powerSet(0);
+			combination(0, 0);
 			sb.append("#").append(tc).append(" ").append(maxTaste).append("\n");
+
+			
+//			// 4-2. 부분집합으로 푼다.
+//			elementUsedCheckList = new boolean[numOfIngre];
+//			maxTaste = 0;
+//			powerSet(0);
+//			sb.append("#").append(tc).append(" ").append(maxTaste).append("\n");
 		}
 		System.out.println(sb);
 	}
 	
 	
-	public static void combination(int totalCal, int totalTaste, int elementIdx) {
+	public static void combination(int selectIdx, int elementIdx) {
 		// 1-1. 종료조건: 칼로리가 초과된 경우
+		int totalCal = 0;
+		for(int idx = 0; idx < selectIdx; idx++) {
+			totalCal += selectElementList[idx][1];
+		}
 		if(totalCal > calLimit) {
 			return;
 		}
 		
+		
 		// 2. 전처리: 칼로리가 초과되지 않았으면 매번 최대 맛점수를 갱신한다.
+		int totalTaste = 0;
+		for(int idx = 0; idx < selectIdx; idx++) {
+			totalTaste += selectElementList[idx][0];
+		}
 		maxTaste = (totalTaste > maxTaste) ? totalTaste : maxTaste;
 		
-		// 1-2. 종료조건 : 모든 음식을 살펴본 경우
+		
+		// 1-2. 종료조건: 모든 음식들을 다 살펴본 경우
 		if(elementIdx == numOfIngre) {
 			return;
 		}
 		
 		
-		
+
 		// 3. 재귀호출: 현재 음식을 고르는 경우
-		combination(totalCal+cal[elementIdx], totalTaste+taste[elementIdx], elementIdx + 1);
+		selectElementList[selectIdx][0] = taste[elementIdx];
+		selectElementList[selectIdx][1] = cal[elementIdx];
+		combination(selectIdx + 1, elementIdx + 1);
 		
 		// 3. 재귀호출: 현재 음식을 안 고르는 경우
-		combination(totalCal, totalTaste, elementIdx + 1);
+		selectElementList[selectIdx][0] = 0;
+		selectElementList[selectIdx][1] = 0;
+		combination(selectIdx, elementIdx + 1);
 	}
 	
 	
