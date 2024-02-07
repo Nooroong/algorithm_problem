@@ -22,14 +22,16 @@ import java.io.*;
 
 public class Main {
 	public static BufferedReader br;
-	
-	public static PriorityQueue<Integer> minHeap;
+	public static StringBuilder sb;
+    
+	public static PriorityQueue<Integer> minHeap; // 숫자들을 저장할 우선순위 큐
 	
 	public static int operationCnt; // 연산의 개수(횟수)
 	public static int operation; // 입력된 연산
 	
 	public static void main(String[] args) throws IOException {
 		br = new BufferedReader(new InputStreamReader(System.in));
+        sb = new StringBuilder();
 		
 		
 		// 1. 연산의 개수를 입력받는다.
@@ -57,9 +59,9 @@ public class Main {
 			
 			if(operation == 0) { // 4. 입력된 값이 0인 경우.
 				if(minHeap.isEmpty()) { // 4-1. 우선순위 큐가 비어있으면 0을 출력한다.
-					System.out.println("0");
+					sb.append("0\n");
 				} else { // 4-2. 비어있지 않다면 값을 뽑아내고 출력한다.
-					System.out.println(minHeap.poll());					
+					sb.append(minHeap.poll()).append("\n");					
 				}
 				
 			} else { // 5. 입력된 값이 0이 아닌 경우.
@@ -67,5 +69,8 @@ public class Main {
 			}
 			operationCnt--;
 		}
+        
+        System.out.println(sb);
 	}
 }
+
