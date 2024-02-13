@@ -1,125 +1,155 @@
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
+ * SWEA
+ * @author eunwoo.lee
  * 
- * @author JiYeon Sin
- * 1. 테스트케이스 개수를 입력받는다.
- * 2. 테스트 케이스만큼 반복한다.
- * 3. 규영이의 카드 정보를 입력받으면서 인영이가 가질 수 있는 카드 정보를 얻어낸다.
- * 4. 9!가지의 카드 순서를 뽑는다.
- * 5. 카드를 다 뽑았으면 규영이와 인영의 점수를 비교한다.
+ * 1. 입력
+ * 	1-1. 테스트 케이스의 수를 입력받는다.
+ * 	1-2. 테스트 케이스의 수만큼 반복한다.
+ * 	1-3. 규영이의 카드 set을 입력받는다.
+ * 	1-4. 인영이의 카드 set을 만든다.(오름차순)
+ * 2. 인영이의 카드 set으로 9개 중 9개 선택하는 순열 만들기
+ * 	3. 한 순열이 만들어지면 그 순열로 game 진행
+ * 	4. game 진행 후 결과 비교해서 승리, 패배 수 count
+ * 
+ * 
+ *
  */
 
 public class Solution {
+	
+	public static final int SELECT_COUNT=9; // 선택할 원소 개수
+	
+	public static int[] selectElementList; // 선택한 원소를 담아놓을 배열
+	public static boolean[] elementUsedCheckList; // 원소 사용 여부 체크 배열
+	
+	
 	public static BufferedReader br;
 	public static StringBuilder sb;
 	public static StringTokenizer st;
 	
-	public static int testCase; // 테스트 케이스 개수
+	public static List<Integer> kCards; // 규영이의 카드 set 저장할 배열
+	public static int[] iCards; // 인영이의 카드 set 저장할 배열
 	
-	public static final int NUM_OF_CARD = 9; // 한 사람이 가지는 카드의 수
-	public static int cards[]; // 규영이가 받은 카드에 대한 정보
+	public static int kScore, iScore; // 규영인영의 점수
+	public static int kWin, kLoose; // 규영 이기고 진 횟수 
 	
-	public static int gyuYeongScore; // 규영이가 얻은 점수
-	public static int inYeongScore; // 인영이가 얻은 점수
-	public static int winCnt; // 규영이가 이긴 횟수
-	public static int lossCnt; // 규영이가 진 횟수
 	
-	public static List<Integer> elementList; // 고를 수 있는 원소들 배열
-	public static boolean[] elementUsedCheckList; // 원소의 선택여부
-	public static int selectCnt; // 골라야하는 원소의 수
-	public static int[] selectElementList; // 고른 원소
 	
-	public static void main(String[] args) throws IOException {
-		br = new BufferedReader(new InputStreamReader(System.in));
-		sb = new StringBuilder();
-		selectCnt = NUM_OF_CARD;
+	public static void game(int[] iCardPermutation) {
 		
+		// 초기화
+		kScore = 0;
+		iScore = 0;
 		
-		// 1. 테스트케이스 개수를 입력받는다.
-		testCase = Integer.parseInt(br.readLine().trim());
-		
-		
-		// 2. 테스트 케이스만큼 반복한다.
-		for(int tc = 1; tc <= testCase; tc++) {
-			// 각종 초기화
-			gyuYeongScore = 0;
-			inYeongScore = 0;
-			winCnt = 0;
-			lossCnt = 0;
-			elementList = new ArrayList<Integer>();
-			elementUsedCheckList = new boolean[NUM_OF_CARD];
-			selectElementList = new int[NUM_OF_CARD];
+		// 게임 9번 실행
+		for (int cardIdx=0; cardIdx<9; cardIdx++) {
+			int kCard = kCards.get(cardIdx);
+			int iCard = iCardPermutation[cardIdx];
 			
-			for(int idx = 1; idx <= NUM_OF_CARD*2; idx++) {
-				elementList.add(idx);
-			}
-			
-			
-			// 3. 규영이의 카드 정보를 입력받는다.
-			cards = new int[NUM_OF_CARD];
-			st = new StringTokenizer(br.readLine().trim());
-			for(int idx = 0; idx < NUM_OF_CARD; idx++) {
-				cards[idx] = Integer.parseInt(st.nextToken());
-				
-				// 인영이의 카드 정보를 정리한다.
-				elementList.remove(elementList.indexOf(cards[idx]));
-			}
-			
-			// nPn의 순열로 풀 수 있나?
-			permutation(0);
-			
-			sb.append("#").append(tc).append(" ").append(winCnt).append(" ").append(lossCnt);
-			System.out.println(sb);
-			sb.setLength(0);
+			if (kCard>iCard) {
+				kScore += kCard+iCard;}
+			else {
+				iScore += kCard+iCard;}
 		}
+		
+		// 4. game 진행 후 결과 비교해서 승리, 패배 수 count
+		if (kScore>iScore) {
+			
+			kWin++;
+		}else if (kScore<iScore) {
+			kLoose++;
+		}			
+		
 	}
 	
-	
-	
-	
-	public static void permutation(int selectIdx) {
-		// 1) 기저조건: r개의 원소를 다 고른경우
-		// 5. 카드를 다 뽑았으면 규영이와 인영의 점수를 비교한다.
-		if(selectIdx == selectCnt) {
-			gyuYeongScore = 0;
-			inYeongScore = 0;
-			
-			for(int idx = 0; idx < selectCnt; idx++) {
-				if(cards[idx] > selectElementList[idx]) {
-					gyuYeongScore += cards[idx] + selectElementList[idx];
-				} else if(cards[idx] < selectElementList[idx]) {
-					inYeongScore += cards[idx] + selectElementList[idx];
-					
-				}
-			}
-
-			if (gyuYeongScore > inYeongScore) winCnt++;
-			else lossCnt++;
-			
+	public static void permutation(int selectedIdx) {
+		// 인영이의 카드 순열을 만드는 메소드
+		// 기존 코드의 elementList-> iCards
+		
+		// 1. 기저 조건  (종료 조건)
+		// 선택하고자 하는 원소의 개수를 다 선택했다면
+		if (selectedIdx==9) {
+			// 3. 한 순열이 만들어지면 그 순열로 game 진행
+			game(selectElementList);
 			return;
 		}
 		
-
-		for(int idx = 0; idx < selectCnt; idx++) {
-			// 2) 전처리
-			if(elementUsedCheckList[idx]) {
+		
+		// 아직 다 선택하지 않았다면
+		// 2. 전처리 로직
+		for (int elementIdx=0; elementIdx<9; elementIdx++) {
+			// 이미 선택한 원소라면 pass
+			if (elementUsedCheckList[elementIdx])
 				continue;
+			
+			// 해당 원소를 아직 사용하지 않았다면 사용!
+			elementUsedCheckList[elementIdx] = true;
+			selectElementList[selectedIdx] = iCards[elementIdx];
+			
+			// 3. 재귀호출
+			permutation(selectedIdx+1);
+			
+			// 4. 후처리 로직
+			elementUsedCheckList[elementIdx] = false; // 사용했으면 되돌려 주기
+		}
+		
+		
+		
+	}
+	
+
+	public static void main(String[] args) throws Exception{
+		br = new BufferedReader(new InputStreamReader(System.in));
+		sb = new StringBuilder();
+		
+		// 1. 입력
+		// 1-1. 테스트 케이스의 수를 입력받는다.
+		st = new StringTokenizer(br.readLine().trim());
+		int testCase = Integer.parseInt(st.nextToken());
+		//1-2. 테스트 케이스의 수만큼 반복한다.
+		for (int tc=1; tc<=testCase; tc++) {
+			
+			sb.append("#").append(tc).append(" ");
+			
+			// 초기화
+			selectElementList = new int[9];
+			elementUsedCheckList = new boolean[9];
+
+			
+			kWin=0;
+			kLoose=0;			
+			
+			// 1-3. 규영이의 카드 set을 입력받는다.
+			kCards = new ArrayList<>();
+			st = new StringTokenizer(br.readLine().trim());
+			for (int kCardIdx=0; kCardIdx<9; kCardIdx++) {
+				kCards.add(Integer.parseInt(st.nextToken()));
+			}
+			// 1-4. 인영이의 카드 set을 만든다.(오름차순)
+			iCards = new int[9];
+			int icardIdx = 0;
+			for (int cardNum=1; cardNum<=18; cardNum++) {
+				if (!kCards.contains(cardNum)) {
+					iCards[icardIdx++] = cardNum;
+				}
 			}
 			
-			elementUsedCheckList[idx] = true;
-			selectElementList[selectIdx] = elementList.get(idx);
+			// 2. 인영이의 카드 set으로 9개 중 9개 선택하는 순열 만들고
+			permutation(0);
 			
-			
-			// 3) 재귀호출
-			permutation(selectIdx+1);
-			
-			
-			// 4) 후처리
-			elementUsedCheckList[idx] = false;
+			// 5. 출력
+			sb.append(kWin+" "+kLoose+"\n");	
 		}
+		System.out.println(sb);
+
 	}
 
 }
-
