@@ -1,59 +1,64 @@
-import java.util.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
 
 /**
+ * BOJ
+ * @author eunwoo.lee
  * 
- * @author JiYeon Sin
- * 정렬시켜놓고 과일들 차례대로 먹으면 되는거 아님????
+ * 1. 입력
+ * 	1-1. 과일의 개수와 스네이크버드의 초기길이를 입력받는다.
+ * 	1-2. 과일의 개수만큼 높이를 입력받는다.
+ * 2. 과일의 높이를 정렬한다.
+ * 3. while문 (birdLength<=maxHeight)
+ * 4-1. 정렬한 다음 과일의 높이가 길이보다 높으면 더이상 먹을 수 없으므로 break
+ * 4-2. 먹을 수 있다면 birdLength++
  * 
- * 1. 과일의 개수와 스네이크버드의 길이를 입력받는다.
- * 2. 과일의 높이를 입력받는다.
- * 3. 과일의 높이들을 오름차순으로 정렬한다.
- * 4. 자신보다 높이가 낮거나 같은 과일들을 하나씩 먹으면서 길이를 1씩 늘린다.
- * 5. 자신보다 높이가 더 높은 과일을 만나면 그만한다.
- * 6. 마지막의 스네이크버드의 높이를 출력한다.
+ *
  */
+
 public class Main {
+	
 	public static BufferedReader br;
+	public static StringBuilder sb;
 	public static StringTokenizer st;
 	
-	public static int numOfFruit; // 과일의 개수
-	public static int snakeBirdLen; // 스네이크 버드의 길이
-	public static int[] fruitHeight; // 과일의 높이
-	
-	
-	public static void main(String[] args) throws IOException {
+	public static int fruitNum, birdLength; 
+	public static int[] fruitHeight;
+
+	public static void main(String[] args) throws Exception{
 		br = new BufferedReader(new InputStreamReader(System.in));
+		sb = new StringBuilder();
 		
-		// 1. 과일의 개수와 스네이크버드의 길이를 입력받는다.
+		// 1. 입력
+		// 1-1. 과일의 개수와 스네이크버드의 초기길이를 입력받는다.
 		st = new StringTokenizer(br.readLine().trim());
-		numOfFruit = Integer.parseInt(st.nextToken());
-		snakeBirdLen = Integer.parseInt(st.nextToken());
+		fruitNum = Integer.parseInt(st.nextToken());
+		birdLength = Integer.parseInt(st.nextToken());
 		
-		
-		// 2. 과일의 높이를 입력받는다.
-		fruitHeight = new int[numOfFruit];
+		// 1-2. 과일의 개수만큼 높이를 입력받는다.
+		fruitHeight = new int[fruitNum];
 		st = new StringTokenizer(br.readLine().trim());
-		for(int index = 0; index < numOfFruit; index++) {
-			fruitHeight[index] = Integer.parseInt(st.nextToken());
+		for (int heightIdx=0; heightIdx<fruitNum; heightIdx++) {
+			fruitHeight[heightIdx] = Integer.parseInt(st.nextToken());
 		}
 		
-		
-		// 3. 과일의 높이들을 오름차순으로 정렬한다.
+		// 2. 과일의 높이를 정렬한다.
 		Arrays.sort(fruitHeight);
 		
-		// 4. 자신보다 높이가 낮거나 같은 과일들을 하나씩 먹으면서 길이를 1씩 늘린다.
-		for(int idx = 0; idx < numOfFruit; idx++) {
-			if(fruitHeight[idx] <= snakeBirdLen) {
-				snakeBirdLen++;
-			} else { // 5. 자신보다 높이가 더 높은 과일을 만나면 그만한다.
+		// 3. 과일에 대해 탐색
+		for (int fruitIdx=0; fruitIdx<fruitNum; fruitIdx++) {
+			// 4-1. 정렬한 다음 과일의 높이가 길이보다 높으면 더이상 먹을 수 없으므로 break			
+			if (fruitHeight[fruitIdx]>birdLength) {
 				break;
 			}
 			
+			// 4-2. 먹을 수 있다면
+			birdLength++;
 		}
-		
-		// 6. 마지막의 스네이크버드의 높이를 출력한다.
-		System.out.println(snakeBirdLen);
+		System.out.println(birdLength);
+
 	}
 
 }
