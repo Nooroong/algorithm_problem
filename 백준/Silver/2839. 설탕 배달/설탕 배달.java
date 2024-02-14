@@ -1,40 +1,61 @@
-import java.util.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
 
 /**
+ * BOJ
+ * @author eunwoo.lee
  * 
- * @author JiYeon Sin
- * 5로 나눠떨어지면 5만큼 빼준다.
- * 3으로 나눠떨어지면 3만큼 빼준다.
- * 둘 다 아니라면 5를 빼준다.
+ * 1. 전체 무게를 입력받는다.
+ * 2. 5kg 봉지 사용 가능 여부 확인 
+ * 		while (5kg 개수>0)
+ * 			5kg개수 : 전체 무게/5 부터 시작
+ * 			만약 전체 무게 - 5*(5kg개수) 가 3의 배수라면 
+ * 			전체 봉지 개수  = 5kg개수 + (전체 무게 - 5*(5kg개수))/3 으로 갱신 후 
+ * 			break
+ * 3. 만약 봉지 개수가 여전히 -1 이라면 (5kg를 사용할 수 없음)
+ * 	만약 전체 무게%3==0 이면
+ * 		전체 봉지 개수  = totalWeight/3
+ * 4. 전체 봉지 무게 출력
  */
+
 public class Main {
+	
 	public static BufferedReader br;
+	public static StringTokenizer st;
 	
-	public static int sugar; // 상근이가 배달해야 할 설탕의 무게
-	public static int bag; // 상근이가 들고가야 할 봉지의 개수
+	public static int totalWeight; // 전체 무게
+	public static int sugarNum; // 봉지 개수
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		br = new BufferedReader(new InputStreamReader(System.in));
 		
-		sugar = Integer.parseInt(br.readLine().trim());		
-		bag = 0;
+		// 1. 전체 무게를 입력받는다.
+		st = new StringTokenizer(br.readLine().trim());
+		totalWeight = Integer.parseInt(st.nextToken());
 		
-		while(sugar > 0) {
-			if(sugar%5 == 0) {
-				bag++;
-				sugar -= 5;
-			} else if(sugar%3 == 0) {
-				bag++;
-				sugar -= 3;
-			} else {
-				sugar -= 5;
-				if(sugar >= 0) bag++;
-				else bag = -1;
+		// 2. 5kg 봉지 사용 가능 여부 확인
+		sugarNum = -1;
+		int num5kg = totalWeight/5;
+		
+		while(num5kg>0) {
+			// 전체무게 - 5*(5kg개수) 가 3의 배수라면 
+			if ((totalWeight-5*num5kg)%3==0) {
+				sugarNum = num5kg + (totalWeight-5*num5kg)/3;
+				break;
+			}
+			num5kg--;
+		}
+		
+		// 3. 만약 봉지 개수가 여전히 -1 이라면 (5kg를 사용할 수 없음)
+		if (sugarNum==-1) {
+			if (totalWeight%3==0) {
+				sugarNum = totalWeight/3;
 			}
 		}
 		
-		System.out.println(bag);
+		// 4. 전체 봉지 무게 출력
+		System.out.println(sugarNum);
 	}
-	
+
 }
