@@ -5,6 +5,7 @@ import java.io.*;
  * 
  * @author JiYeon Sin
  * 이동할 수 있는 모든 경우의 수를 탐색하며 최소 이동 경로를 찾는다.
+ * 가지치기
  * 
  * 1. 좌표 정보를 담는 클래스를 하나 만든다.
  * 2. 테스트 케이스의 개수를 입력받는다.
@@ -78,6 +79,12 @@ public class Solution {
 	
 	// 파라미터: 현재 방문한 장소의 인덱스, 지금까지 방문한 고객의 수, 지금까지 이동한 총 거리
 	public static void bt(int curIdx, int visitCount, int distance) {
+		// 지금까지 구한 거리가   minDistance를 초과했다면 계속 탐색을 진행할 필요가 없다.
+		// 따라서 탐색을 종료시킨다.
+		if(distance > minDistance) {
+			return;
+		}
+		
 		// 종료조건: 모든 고객을 다 방문한 경우
 		if(visitCount == numOfCustom) {
 			// 마지막 고객(curIdx)과 김대리의 집 위치의 거리를 계산한다.
