@@ -1,99 +1,84 @@
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
 
 /**
+ * BOJ
+ * @author eunwoo.lee
  * 
- * @author JiYeon Sin
- * 
- * 암호문의 문자들은 오름차순으로 정렬되어야 한다. 출력도 사전순으로 해야한다.
- * 따라서 사용할 수 있는 문자들을 입력받고 그것들을 오름차순으로 정렬해준다.
- * 약간 순열 비스무리하게 풀면 될듯?
- * 원소를 뽑을 때마다 사용한 모음 개수, 자음 개수를 세어준다.
- * 원소를 다 뽑으면 출력을 한다.
- * 
- * 
+ * 1. 입력
+ * 	1-1. 암호의 길이와 문자의 종류 수를 입력받는다.
+ * 	1-2. 문자의 종류를 입력받는다.
+ * 2. 조합을 통해 가능한 알파벳 조합을 만든다.
+ * 	2-1. 기저조건을 만족하면 자음, 모음 개수 검사해서 만족할시 출력
+ *
  */
 
 public class Main {
-	public static BufferedReader br;
-	public static StringTokenizer st;
-	public static StringBuilder sb;
 	
-	public static final int MIN_VOWEL_COUNT = 1;
-	public static final int MIN_CON_COUNT = 2;
+	static BufferedReader br;
+	static StringBuilder sb;
+	static StringTokenizer st;
 	
-	public static int selectCount; // 사용해야하는 문자의 수
-	public static int elementCount; // 주어진 문자의 수
-	public static boolean[] elementUsedList; // 사용한 문자 정보
-	public static char[] selectElementList; // 만든 암호문
+	static int pwLength, pwAlphaNum;
+	static char[] pwAlpha;
 	
+	static char[] selectedElementList;
 	
-	public static char[] elementList; // 암호문에 사용할 수 있는 문자들
+	public static void combination(int selectIdx, int elementIdx) {
+		// 1. 기저조건
+		// 다 선택했다
+		if (selectIdx==pwLength) {
+			int vowel=0;
+			int consonant=0;
+			// 여기서 자음, 모음 개수 검사
+			for (int idx=0; idx<pwLength; idx++) {
+				if (selectedElementList[idx]=='a' || selectedElementList[idx]=='e' || selectedElementList[idx]=='i' ||
+						selectedElementList[idx]=='o' || selectedElementList[idx]=='u')
+					vowel++;
+				else
+					consonant++;
+			}
+			if (vowel>=1 && consonant>=2)
+				System.out.println(new String(selectedElementList));
+			return;
+		}
+		// 원소의 끝까지 다 살펴봤다
+		if (elementIdx==pwAlphaNum)
+			return;
+		
+		// 현재 원소 선택했을때
+		selectedElementList[selectIdx] = pwAlpha[elementIdx];
+		combination(selectIdx+1, elementIdx+1);
+		// 현재 원소 선택X
+		selectedElementList[selectIdx] = ' ';
+		combination(selectIdx, elementIdx+1);
+	}
 	
-	public static void main(String[] args) throws IOException {
+
+	public static void main(String[] args) throws Exception{
 		br = new BufferedReader(new InputStreamReader(System.in));
 		sb = new StringBuilder();
 		
+		// 1. 입력
+		// 1-1. 암호의 길이와 문자 종류 수를 입력받는다.
 		st = new StringTokenizer(br.readLine().trim());
-		
-		// 암호문에 사용해야하는 문자의 수, 주어진 문자의 수를 입력받는다.
-		selectCount = Integer.parseInt(st.nextToken());
-		elementCount = Integer.parseInt(st.nextToken());
-		
-		// 각종 할당 및 초기화
-		elementUsedList = new boolean[elementCount];
-		selectElementList = new char[selectCount];
-		
-		// 암호문에 사용할 수 있는 문자들을 입력받는다.
-		elementList = new char[elementCount];
+		pwLength = Integer.parseInt(st.nextToken());
+		pwAlphaNum = Integer.parseInt(st.nextToken());
+		// 1-2. 문자의 종류를 입력받는다.
+		pwAlpha = new char[pwAlphaNum];
 		st = new StringTokenizer(br.readLine().trim());
-		for(int idx = 0; idx < elementCount; idx++) {
-			elementList[idx] = st.nextToken().charAt(0);
+		for (int idx=0; idx<pwAlphaNum; idx++) {
+			pwAlpha[idx] = st.nextToken().charAt(0);
 		}
+		// 알파벳 순을 거스르지 않으므로 정렬
+		Arrays.sort(pwAlpha);
 		
-		Arrays.sort(elementList); // 사용가능한 문자들을 오름차순으로 정렬한다.
-		
-		makeCipher(0, 0, 0, 0);
-		
-		System.out.println(sb);
+		// 2. 조합으로 가능한 암호를 뽑는다.
+		selectedElementList = new char[pwLength];
+		combination(0,0);
+
 	}
-	
-	
-	public static void makeCipher(int selectIdx, int elementIdx, int vowelCount, int conCount) {
-		// 기저조건: 모든 원소를 뽑은 경우
-		if(selectIdx == selectCount) {
-			// 모음, 자음 최수 개수를 만족하면
-			if(vowelCount >= MIN_VOWEL_COUNT && conCount >= MIN_CON_COUNT) {
-				for(int idx = 0; idx < selectCount; idx++) {
-					// 출력
-					sb.append(selectElementList[idx]);
-				}
-				sb.append("\n");
-			}
-			return;
-		}
-		
-		
-		
-		// 다음 원소를 고른다.
-		for(int idx = elementIdx; idx < elementCount; idx++) {
-			if(elementUsedList[idx]) {
-				continue;
-			}
-			
-			elementUsedList[idx] = true;
-			char nextChar = elementList[idx]; // 다음에 고르게 될 문자
-			
-			selectElementList[selectIdx] = nextChar;
-			if(nextChar == 'a' || nextChar == 'i' || nextChar == 'o' || nextChar == 'u' || nextChar == 'e') {
-				makeCipher(selectIdx+1, idx, vowelCount+1, conCount);
-			} else {
-				makeCipher(selectIdx+1, idx, vowelCount, conCount+1);
-			}
-			
-			elementUsedList[idx] = false;
-			
-		}
-		
-	}
+
 }
