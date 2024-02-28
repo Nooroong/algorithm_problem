@@ -34,7 +34,8 @@ public class Main {
 			
 			// dp table을 채워나간다.
 			for (int i = 0; i <= east; i++) {
-				for (int j = 0, end = Math.min(i,  west); j <= end; j++) {
+				for (int j = 0, end = (i < west) ? i : west;
+					 j <= end; j++) {
 					if(j == 0 || j == i) combi[i][j] = 1; // nC0, nCn의 경우 1을 넣는다.
 					else combi[i][j] = combi[i-1][j-1] + combi[i-1][j]; // nCk = n-1Ck-1 + n-1Ck
 				}
