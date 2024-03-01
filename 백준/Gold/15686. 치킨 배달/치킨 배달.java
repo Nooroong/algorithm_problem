@@ -1,118 +1,123 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.StringTokenizer;
+import java.io.*;
+import java.util.*;
 
 /**
- * BOJ
- * @author eunwoo.lee
  * 
- * 1. 테스트 케이스를 입력받는다. 
- * 2. 조합으로 폐업하지 않을 치킨집을 뽑는다.
- * 	2-1. 최대 치킨집 개수를 다 선택하면, 치킨 거리를 계산한다.
- * 3. 각 집에 대하여 선택된 치킨 집 중 거리가 최소인 치킨집과의 거리를 누적해 더한다.
- * 4. 답을 출력한다.
- *
+ * @author JiYeon Sin
+ * '최대' m개의 치킨집을 살려야 한다.
+ * 따라서 nC1 ~ nCm에 대해 모두 생각해야 한다.
+ * 모든 입력을 받은 뒤 선택할 수 있는 원소의 수를 1씩 늘려가면서 치킨집을 고른다.
+ * 치킨집을 다 선택하면 도시의 치킨 거리를 계산한다.
  */
 
-class Point{
-	int rowIdx;
-	int colIdx;
-	
-	Point(int rowIdx, int colIdx) {
-		this.rowIdx = rowIdx;
-		this.colIdx = colIdx;
-	}
-}
-
 public class Main {
+	public static BufferedReader br;
+	public static StringTokenizer st;
 	
-	static BufferedReader br;
-	static StringTokenizer st;
+	public static int mapSize; // 도시의 크기
+	public static int[][] map; // 도시의 정보를 저장하는 배열
 	
-	static int citySize, maxChikenNum;
-	static int[][] city; // 도시 정보 저장
-	static ArrayList<Point> homeList, chickenList; // 집과 치킨집 정보 저장
-	static int minChickenDistance, minChickenDistanceSum;
-	static int[] selectedChickenList; // 조합에서 선택한 치킨집 인덱스 저장
+	public static int selectCount; // 선택할 수 있는 치킨집의 수
+	public static int maxSelectCount; // 선택할 수 있는 치킨집의 최대 수
+	public static int[] selectElementList; // 선택한 치킨집의 인덱스가 담긴다.
 	
-	public static int calChickenDistance(int[] selectedChickenList) {
+	public static final int HOUSE = 1;
+	public static final int CHIKEN = 2;
 	
-		minChickenDistanceSum = 0;
+	public static List<int[]> houseList; // 집 목록
+	public static List<int[]> chikenList; // 치킨집 목록
+	
+	public static int minChikenStreet; // 최소 치킨 거리
+	
+	
+	public static void main(String[] args) throws IOException {
+		br = new BufferedReader(new InputStreamReader(System.in));
 		
-		// 각 집마다 제일 가까운 치킨집 거리 구하기
-		for (int homeIdx=0; homeIdx<homeList.size(); homeIdx++) {
-			int minChickenDistanceByHome=4*citySize*citySize;
-			for (int chickenIdx=0; chickenIdx<maxChikenNum; chickenIdx++) {
-				minChickenDistanceByHome = Math.min(minChickenDistanceByHome, 
-						Math.abs(homeList.get(homeIdx).rowIdx-chickenList.get(selectedChickenList[chickenIdx]).rowIdx)+Math.abs(homeList.get(homeIdx).colIdx-chickenList.get(selectedChickenList[chickenIdx]).colIdx));
-			}
-			minChickenDistanceSum += minChickenDistanceByHome;
-		}
-		return minChickenDistanceSum;
-	}
-
-	public static void combination(int selectIdx, int chickenIdx) {
-		// 1. 기저 조건
-		// 다 선택함
-		if (selectIdx==maxChikenNum) {
-			minChickenDistance = Math.min(minChickenDistance, calChickenDistance(selectedChickenList));
-			return;
-		}
-		// 모든 원소를 살펴봤다.
-		if (chickenIdx==chickenList.size()) {
-			return;
-		}
-		
-		// 2. 해당 원소 사용
-		selectedChickenList[selectIdx] = chickenIdx;
-		combination(selectIdx+1, chickenIdx+1);
-		
-		// 3. 해당 원소를 사용하지 않을때
-		selectedChickenList[selectIdx] = 0;
-		combination(selectIdx, chickenIdx+1);
-	}
-	
-	
-	public static void inputTestCase() throws IOException{
-		// 도시의 크기와 치킨집의 최대 개수를 입력받는다.
 		st = new StringTokenizer(br.readLine().trim());
-		citySize = Integer.parseInt(st.nextToken());
-		maxChikenNum = Integer.parseInt(st.nextToken());
 		
-		// 도시의 정보를 입력받는다.
-		city = new int[citySize][citySize];
-		homeList = new ArrayList<>();
-		chickenList = new ArrayList<>();
+		// 지도의 크기와 고를 수 있는 치킨집의 최대 수를 입력받는다.
+		mapSize = Integer.parseInt(st.nextToken());
+		maxSelectCount = Integer.parseInt(st.nextToken());
 		
-		for (int cityRowIdx=0; cityRowIdx<citySize; cityRowIdx++) {
+		// 각종 초기화
+		map = new int[mapSize][mapSize];
+		minChikenStreet = Integer.MAX_VALUE;
+		chikenList = new ArrayList<>();
+		houseList = new ArrayList<>();
+		
+		// 지도의 정보를 입력받으면서 집 목록, 치킨집 목록에 원소를 추가한다.
+		for(int rowIdx = 0; rowIdx < mapSize; rowIdx++) {
 			st = new StringTokenizer(br.readLine().trim());
-			for (int cityColIdx=0; cityColIdx<citySize; cityColIdx++) {
-				city[cityRowIdx][cityColIdx] = Integer.parseInt(st.nextToken());
-				// 각 집과 치킨집의 좌표를 arrayList에 저장
-				if (city[cityRowIdx][cityColIdx]==1) {
-					homeList.add(new Point(cityRowIdx, cityColIdx));
-				}else if (city[cityRowIdx][cityColIdx]==2) {
-					chickenList.add(new Point(cityRowIdx, cityColIdx));
+			
+			for(int colIdx = 0; colIdx < mapSize; colIdx++) {
+				map[rowIdx][colIdx] = Integer.parseInt(st.nextToken());
+				
+				if(map[rowIdx][colIdx] == CHIKEN) {
+					chikenList.add(new int[] {rowIdx, colIdx});
+				} else if(map[rowIdx][colIdx] == HOUSE) {
+					houseList.add(new int[] {rowIdx, colIdx});
 				}
 			}
 		}
+		
+		// nC1 ~ nCm
+		for(selectCount = 1; selectCount <= maxSelectCount; selectCount++) {
+			selectElementList = new int[selectCount];
+			selectChiken(0, 0);
+		}
+		
+		// 도시의 치킨 거리의 최솟값을 출력한다.
+		System.out.println(minChikenStreet);
+		
 	}
-
-	public static void main(String[] args) throws Exception{
-		br = new BufferedReader(new InputStreamReader(System.in));
+	
+	
+	// 조합으로 폐업시키지 않을 치킨집을 고른다.
+	public static void selectChiken(int selectIdx, int elementIdx) {
+		// 기저조건 1: 치킨집을 다 고른 경우
+		if(selectIdx == selectCount) {
+			int chikenStreet = calcCityChikenStreet(); // 도시의 치킨 거리를 계산한다.
+			if(chikenStreet < minChikenStreet) minChikenStreet = chikenStreet; // 최소값 갱신
+			return;
+		}
 		
-		// 테스트 케이스를 입력받는다.
-		inputTestCase();
+		// 기저조건 2: 모든 원소를 다 살핀 경우
+		if(elementIdx == chikenList.size()) {
+			return;
+		}
 		
-		// 조합으로 폐업하지 않을 치킨집을 선택한다.
-		minChickenDistance = Integer.MAX_VALUE;
-		selectedChickenList = new int[maxChikenNum];
-		combination(0, 0);
+		// 현재 치킨집을 선택하는 경우
+		selectElementList[selectIdx] = elementIdx;
+		selectChiken(selectIdx+1, elementIdx+1);
 		
-		// 출력
-		System.out.println(minChickenDistance);
+		// 현재 치킨집을 선택하지 않는 경우
+		selectElementList[selectIdx] = 0;
+		selectChiken(selectIdx, elementIdx+1);
 	}
-
+	
+	
+	
+	
+	public static int calcCityChikenStreet() {
+		// 모든 집들에 대해 선택된 치킨집과의 거리를 계산한다.
+		// 최소값을 찾으면 그 값을 변수에 더하고 결과를 반환한다.
+		
+		int cityCikenStreet = 0; // 도시의 치킨 거리
+		
+		// 각 집에 대해 치킨 거리를 찾는다.
+		for(int[] house : houseList) {
+			int minDistance = Integer.MAX_VALUE;
+			
+			for(int element : selectElementList) {
+				// 각 집의 치킨거리 == 집과 가장 가까운 치킨집 사이의 거리
+				int distance = Math.abs(house[0]-chikenList.get(element)[0]) + Math.abs(house[1]-chikenList.get(element)[1]);
+				if(distance < minDistance) minDistance = distance;
+			}
+			
+			// 도시의 치킨 거리는 모든 집의 치킨 거리의 합
+			cityCikenStreet += minDistance;
+		}
+		
+		return cityCikenStreet;
+	}
 }
