@@ -4,13 +4,20 @@ import java.util.*;
 /**
  * 
  * @author JiYeon Sin
- * 50*50
  * 최단 경로 찾기 -> BFS
- * S에서 D로 *를 피해서 가야한다.
  * 
  * 물이 찰 예정은 고슴도치가 이동할 수 없다.
- * -> 그냥 도치를 이동할 수 있는 곳으로 다 이동시키고 물에 빠지는 도치는 물로 덮어버린다.
- *    어차피 목적저는 물에 잠기지 않으니 이렇게 해도 괜찮을지도?
+ * 따라서 물을 먼저 퍼트린 후 고슴도치를 이동시킨다.
+ * 문제에서 물이 하나만 주어진다는 얘기가 없다 -> 초기 맵에 물이 여러개가 있을 수도 있음을 고려
+ * 
+ * 1. 맵 사이즈를 입력받고 할당하기
+ * 2. 맵 입력받기 + 각종 오브젝트들 위치 찾기
+ * 3. 도치를 규칙에 따라 이동시킨다.
+ * 	3-1. 큐가 빌 때 까지 반복.
+ * 	3-2. 물을 먼저 퍼트린다.
+ * 	3-3. 1초마다 도치를 한 칸만 이동시킨다.
+ * 	3-4. 도치가 다음에 이동할 위치가 목적지라면 성공, 큐가 빌때까지 목적지에 도달하지 못하면 실패
+ * 4. 결과를 출력한다.
  *
  */
 public class Main {
@@ -26,40 +33,40 @@ public class Main {
 					  GOAL = 'D',
 					  DOCHI = 'S';
 	
-	static int dochiRow, dochiCol,
-			   goalRow, goalCol;
-	
-	static List<Point> water = new ArrayList<>();
+	static int goalRow, goalCol;
 	
 	static int rowSize, colSize;
 	static char[][] map;
 	
-	static Queue<Point> queue = new ArrayDeque<>();
-	static boolean[][] waterVisited;
+	static Queue<Point> waterQueue = new ArrayDeque<>();
+	static Queue<Point> dochiQueue = new ArrayDeque<>();
+	
 	static boolean[][] dochiVisited;
-	static boolean isEnd;
-	static int time, dochiCount;
+	static int time;
 	
 	public static void main(String[] args) throws IOException {
 		br = new BufferedReader(new InputStreamReader(System.in));
 		
-		
+		// 1. 맵 사이즈를 입력받고 할당하기
 		st = new StringTokenizer(br.readLine().trim());
 		rowSize = Integer.parseInt(st.nextToken());
 		colSize = Integer.parseInt(st.nextToken());
 		map = new char[rowSize][colSize];
 		
-		// map 입력받기 + 각종 오브젝트들 위치 찾기
+		
+		// 2. 맵 입력받기 + 각종 오브젝트들 위치 찾기
 		for(int rowIdx = 0; rowIdx < rowSize; rowIdx++) {
 			String line = br.readLine().trim();
 			for(int colIdx = 0; colIdx < colSize; colIdx++) {
 				map[rowIdx][colIdx] = line.charAt(colIdx);
 				
 				if(map[rowIdx][colIdx] == DOCHI) {
-					dochiRow = rowIdx;
-					dochiCol = colIdx;
+					// BFS에 사용할 큐에 출발 도치의 좌표를 넣어준다.
+					dochiQueue.offer(new Point(rowIdx, colIdx));
+					
 				} else if(map[rowIdx][colIdx] == WATER) {
-					water.add(new Point(rowIdx, colIdx));
+					waterQueue.offer(new Point(rowIdx, colIdx));
+					
 				} else if(map[rowIdx][colIdx] == GOAL) {
 					goalRow = rowIdx;
 					goalCol = colIdx;
@@ -68,141 +75,104 @@ public class Main {
 		}
 		
 		
-		
-		// 각종 변수 초기화
-		time = 0; 
-		dochiCount = 1;		
-		isEnd = false;
-		
-		
-		// 맵에 남은 도치의 수가 0이거나 어떤 시간을 초과하면 실패로 본다.
-		while(dochiCount > 0) {
-			time++; // 시간은 1초부터 시작
-			
-			waterVisited = new boolean[rowSize][colSize];
-			dochiVisited = new boolean[rowSize][colSize];
-			
-			// 도치를 먼저 퍼트린다.만약 목적지에 도착하면 성공.
-			if(dochiBFS()) {
-				isEnd = true;
-				break;
-			}
-			
-			// 물을 퍼트린다.
-			waterSpread();
-			
-			
-//			printMap();
-//			System.out.println("dochi Count: " + dochiCount);
-		}
-		
-		System.out.println(isEnd ? time : "KAKTUS");
+		// 3. 도치를 규칙에 따라 이동시킨다.
+		// 목적지에 도달하지 못한 경우 KAKTUS 출력.
+		System.out.println(dochiMove() > 0 ? time : "KAKTUS");
 	}
+	
 	
 	
 	static void waterSpread() {
-		// 물 시작 위치 처리
-		for(int idx = 0; idx < water.size(); idx++)
-			queue.offer(water.get(idx));
+		// 큐의 사이즈를 바탕으로 함수 call 한 번에 한 level씩만 탐색하도록 한다.
+		int size = waterQueue.size();
 		
-		while(!queue.isEmpty()) {
-			Point curPoint = queue.poll();
-			int curRow = curPoint.row, curCol = curPoint.col;
+		while(size-- > 0) {
+			Point curPoint = waterQueue.poll();
+			int curRow = curPoint.row,
+				curCol = curPoint.col;
+
 			
-			if(waterVisited[curRow][curCol]) continue;
-			waterVisited[curRow][curCol] = true;
-			
-			// 물이 갈 수 있는 새로운 위치로 퍼진다.
-			// 한 번에 한 칸씩만 퍼질 수 있다.
-			if(map[curRow][curCol] == BLANK || map[curRow][curCol] == DOCHI) {
-				
-				// 물이 퍼질 위치에 도치가 있다면 물로 덮어버리고 도치 수를 1 감소시킨다.
-				if(map[curRow][curCol] == DOCHI) dochiCount--;
-				
-				map[curRow][curCol] = WATER;
-				continue;
-			}
-			
-			// 물은 목적지와 돌을 통과할 수 없다.
-			if(map[curRow][curCol] == GOAL || map[curRow][curCol] == ROCK)
-				continue;
-			
-			
-			
+			// 물을 상, 하, 좌, 우로 퍼트린다.
 			for(int dir = 0; dir < deltaRow.length; dir++) {
 				int newRow = curRow + deltaRow[dir];
 				int newCol = curCol + deltaCol[dir];
 				
-				if(newRow < 0 || newRow >= rowSize || newCol < 0 || newCol >= colSize)
-					continue;
+				if(!isAvailable(newRow, newCol)) continue; // 맵 밖을 벗어난 경우
 				
-				queue.offer(new Point(newRow, newCol));
-			}
-			
-		}
-		
-		return;
-		
+				// 물은 돌, 목적지를 뚫을 수 없다.
+				// 이미 물이 있는 곳으로는 갈 필요가 없다.
+				if(map[newRow][newCol] == WATER ||
+				   map[newRow][newCol] == ROCK ||
+				   map[newRow][newCol] == GOAL)
+					continue; 
+				
+				
+				// 물이 갈 수 있는 새로운 위치로 퍼진다.
+				map[newRow][newCol] = WATER;
+				waterQueue.offer(new Point(newRow, newCol));
+			}	
+		}		
 	}
 	
 	
-	static boolean dochiBFS() {
-		// 맵 상에 남아있는 도치들을 찾아 큐에 넣는다.
-		for(int rowIdx = 0; rowIdx < rowSize; rowIdx++) {
-			for(int colIdx = 0; colIdx < colSize; colIdx++) {
-				if(map[rowIdx][colIdx] == DOCHI) {
-					queue.offer(new Point(rowIdx, colIdx));
+	static int dochiMove() {
+		dochiVisited = new boolean[rowSize][colSize];
+		dochiVisited[dochiQueue.peek().row][dochiQueue.peek().col] = true; // 도치 시작 위치 방문처리
+		time = 1; // 시간은 1초부터 시작
+		
+		
+		// 3-1. 큐가 빌 때 까지 반복.
+		// 큐에는 물에 빠지지 않은 도치들만 남게 된다.
+		while(!dochiQueue.isEmpty()) {
+			int size = dochiQueue.size();
+ 
+			waterSpread(); // 3-2. 물을 먼저 퍼트린다.
+			
+			// 3-3. 1초마다 도치를 한 칸만 이동시킨다.
+			while(size-- > 0) {
+				Point curPoint = dochiQueue.poll();
+				int curRow = curPoint.row, curCol = curPoint.col;
+				
+				
+				// 상, 하, 좌, 우 이동
+				for(int dir = 0; dir < deltaRow.length; dir++) {
+					int newRow = curRow + deltaRow[dir];
+					int newCol = curCol + deltaCol[dir];
+					
+					if(!isAvailable(newRow, newCol)) continue; // 맵 밖을 벗어난 경우
+					
+					if(map[newRow][newCol] == GOAL) return time+1; // 도치가 목적지에 도달하면 time+1 반환
+					
+					// 도치는 물에 잠길 곳, 돌, 이미 방문한 곳으로는 새롭게 탐색할 수 없다.
+					if(map[newRow][newCol] == WATER ||
+					   map[newRow][newCol] == ROCK ||
+					   dochiVisited[newRow][newCol])
+						continue;
+					
+
+					dochiVisited[newRow][newCol] = true; // 새로운 탐색지에 도치를 방문 처리한다.
+					map[newRow][newCol] = DOCHI;
+					dochiQueue.offer(new Point(newRow, newCol));
 				}
-				
 			}
+//			printMap();
+			time++; // 시간을 증가시킨다.
+			
 		}
 		
-		// 각 도치들을 상, 하, 좌, 우로 퍼트린다.
-		while(!queue.isEmpty()) {
-			Point curPoint = queue.poll();
-			int curRow = curPoint.row, curCol = curPoint.col;
-			
-			
-			if(dochiVisited[curRow][curCol]) continue;
-			dochiVisited[curRow][curCol] = true;
-			
-			// 도치가 목적지에 도달하면 true 반환
-			if(map[curRow][curCol] == GOAL)
-				return true;
-			
-			// 도치가 새롭게 이동할 수 있는 곳을 발견하면 맵에 남은 도치 수를 +1한다.
-			// 도치는 한 번에 한 칸만 이동할 수 있음에 주의한다.
-			if(map[curRow][curCol] == BLANK) {
-				map[curRow][curCol] = DOCHI;
-				dochiCount++;
-				continue;
-			}
-			
-			// 돌과 물이 있는 곳으로는 이동할 수 없다.
-			if(map[curRow][curCol] == ROCK || map[curRow][curCol] == WATER)
-				continue;
-			
-			
-			// 상, 하, 좌, 우 이동
-			for(int dir = 0; dir < deltaRow.length; dir++) {
-				int newRow = curRow + deltaRow[dir];
-				int newCol = curCol + deltaCol[dir];
-				
-				// 맵의 범위를 벗어나지 않도록 한다.
-				if(newRow < 0 || newRow >= rowSize || newCol < 0 || newCol >= colSize)
-					continue;
-				
-				queue.offer(new Point(newRow, newCol));
-			}
-		}
 		
-		return false;
+		// 3-4. 도치가 다음에 이동할 위치가 목적지라면 성공, 큐가 빌때까지 목적지에 도달하지 못하면 실패
+		return -1;
 	}
 	
 	static void printMap() {
 		System.out.println("time: " + time);
 		for(int rowIdx = 0; rowIdx < rowSize; rowIdx++)
 			System.out.println(Arrays.toString(map[rowIdx]));
+	}
+	
+	static boolean isAvailable(int row, int col) {
+		return (row >= 0 && row < rowSize && col >= 0 && col < colSize);
 	}
 	
 	
@@ -215,11 +185,6 @@ public class Main {
 			this.col = col;
 		}
 
-		@Override
-		public String toString() {
-			return "Point [row=" + row + ", col=" + col + "]";
-		}
-		
 		
 	}
 }
