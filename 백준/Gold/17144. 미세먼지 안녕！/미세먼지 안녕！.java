@@ -4,8 +4,20 @@ import java.util.*;
 /**
  * 
  * @author JiYeon Sin
+ * 미먼 확신 시 고려사항
+ * : 다른 칸의 확장으로 기존 값이 변할 수도 있기 때문에 기존 미먼 양도 기억해야 한다.
+ * 따라서 Point 클래스에 멤버 변수로 amount도 넣었다.
  * 
- * 미먼 확장에서 방문처리는 필요없다.
+ * 
+ * 1. 방 정보를 입력받는다.
+ * 2. 0열에서 공기청정기의 위치를 찾아 저장한다.
+ * 3. 주어진 시간 동안 반복한다.
+ * 4. 확산을 위해 방에 남아있는 미먼을 큐에 넣는다.
+ * 5. 미먼을 확산시킨다. 여기서 방문처리는 필요없다.
+ * 	5-1. bfs를 이용한다.
+ * 6. 공기청정기를 돌린다.
+ * 	6-1. 값을 미는 방식 말고, 현재 값을 앞으로 끌어다오는 방식으로 구현
+ * 7. 방에 남은 미먼의 양을 출력한다.
  *
  */
 public class Main {
@@ -39,45 +51,42 @@ public class Main {
 		
 		room = new int[rowSize][colSize];
 		
-		// 방의 정보를 입력받는다.
+		// 1. 방 정보를 입력받는다.
 		for(int rowIdx = 0; rowIdx < rowSize; rowIdx++) {
 			st = new StringTokenizer(br.readLine().trim());
 			for(int colIdx = 0; colIdx < colSize; colIdx++) {
 				room[rowIdx][colIdx] = Integer.parseInt(st.nextToken());
-				
-				// 미먼은 큐에 넣는다.
-				if(room[rowIdx][colIdx] > 0) {
-					queue.offer(new Point(rowIdx, colIdx, room[rowIdx][colIdx]));
-				}
 			}
 		}
 		
 		
-		// 0열에서 공청의 위치를 찾는다.
+		// 2. 0열에서 공기청정기의 위치를 찾아 저장한다.
 		for(int rowIdx = 0; rowIdx < rowSize; rowIdx++) {
 			if(room[rowIdx][0] == -1) {
-				// 크기는 두 행을 차지한다.
+				// 공청은 두 행을 차지한다.
 				topAirCleaner = new Point(rowIdx, 0, -1);
 				bottomAirCleaner = new Point(rowIdx+1, 0, -1);
 				break;
 			}
 		}
+
 		
 		
-		
-		// 시간이 다 할때까지 반복한다
+		// 3. 주어진 시간 동안 반복한다.
 		while(time-- > 0) {
-			mimunExtension(); // 미세먼지를 확장시킨다.
-			runAirCleaner(); // 공기청정기가 작동한다.
-			addMimunToQueue(); // 남은 미먼을 큐에 넣는다.
+			addMimunToQueue(); // 4. 확산을 위해 방에 남아있는 미먼을 큐에 넣는다.
+			mimunExtension(); // 5. 미먼을 확산시킨다.
+			runAirCleaner(); // 6. 공기청정기를 돌린다.
 		}
 		
-		// 남은 미먼의 양을 출력한다.
+		
+		// 7. 방에 남은 미먼의 양을 출력한다.
 		System.out.println(leftMimunCount());
 	}
 	
 	
 	static void mimunExtension() {
+		// 5-1. bfs를 이용한다.
 		while(!queue.isEmpty()) {
 			Point curPoint = queue.poll();
 			int curRow = curPoint.row;
@@ -90,23 +99,22 @@ public class Main {
 				int newRow = curPoint.row + deltaRow[dir];
 				int newCol = curPoint.col + deltaCol[dir];
 				
-				if(!isAvailable(newRow, newCol)) continue;
+				if(!isAvailable(newRow, newCol)) continue; // 방의 범위를 벗어난 경우
 				if(room[newRow][newCol] == -1) continue; // 공기 청정기가 있는 곳으로는 확장할 수 없다.
 				
-				room[newRow][newCol] += (curAmount / 5); // 1/5만큼 확산된다.
-				extensionCount++;
+				room[newRow][newCol] += (curAmount / 5); // 현재 양의 1/5만큼 확산된다.
+				extensionCount++; // 확산 수 증가
 			}
 			
 			// 현재 칸 미먼 감소.
 			room[curRow][curCol] -= (curAmount / 5) * extensionCount;
 			if(room[curRow][curCol] < 0) room[curRow][curCol] = 0; // 음수가 될 경우 0으로 바꿔준다.
 		}
-
 	}
 	
 	
 	static void runAirCleaner() {
-		// 값을 미는 방식 말고, 현재 값을 앞으로 끌어다오는 방식으로 구현
+		// 6-1. 값을 미는 방식 말고, 현재 값을 앞으로 끌어다오는 방식으로 구현
 		
 		// 위쪽 - 반시계방향 순환(상, 우, 하, 좌 순서)
 		int curRow = topAirCleaner.row;
@@ -178,9 +186,8 @@ public class Main {
 		room[bottomAirCleaner.row][bottomAirCleaner.col + 1] = 0;
 	}
 	
+	// 현재 시간에 대한 확산을 위해 방에 남은 미먼을 큐에 넣는다.
 	static void addMimunToQueue() {
-		// 공기청정기 작동 후 다음 번 확산을 위해 방에 남은 미먼을 큐에 넣는다
-		// 확장이 끝나면 다음 확장을 위해 전체 방에서 미먼이 있는 칸을 큐에 넣는다.
 		for(int rowIdx = 0; rowIdx < rowSize; rowIdx++) {
 			for(int colIdx = 0; colIdx < colSize; colIdx++) {
 				if(room[rowIdx][colIdx] > 0)
@@ -190,6 +197,7 @@ public class Main {
 	}
 	
 	
+	// 방에 남은 미먼 수 계산
 	static int leftMimunCount() {
 		int count = 0;
 		
@@ -202,9 +210,11 @@ public class Main {
 		return count;
 	}
 	
+	
 	static boolean isAvailable(int row, int col) {
 		return (row >= 0 && row < rowSize && col >= 0 && col < colSize);
 	}
+	
 	
 	static void printRoom() {
 		for(int rowIdx = 0; rowIdx < rowSize; rowIdx++)
