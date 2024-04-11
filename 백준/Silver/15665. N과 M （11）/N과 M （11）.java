@@ -4,7 +4,8 @@ import java.util.*;
 /**
  * 
  * @author JiYeon Sin
- * 중복 순열?
+ * 같은 값이 여러 개 들어오는 건 신경쓸 필요 없고
+ * 중복을 뺀 뒤 중복 순열을 만들면 된다.
  *
  */
 public class Main {
@@ -12,7 +13,7 @@ public class Main {
 	static StringTokenizer st;
 	static StringBuilder sb;
 	
-	static boolean elementList[]; // 각 자연수의 수를 기록
+	static int elementList[]; // 원소들을 기록
 	static int elementCount, selectCount;
 	static int selectElementList[]; // 선택한 원소들을 담는 배열
 	
@@ -25,17 +26,33 @@ public class Main {
 		elementCount = Integer.parseInt(st.nextToken());
 		selectCount = Integer.parseInt(st.nextToken());
 		
-		elementList = new boolean[10001]; // 입력으로 주어지는 수는 10000이하의 자연수
+		elementList = new int[elementCount]; // 입력으로 주어지는 수는 자연수
 		selectElementList = new int[selectCount];
 		
+		// elementList에는 중복된 원소를 넣지 않는다.
+		int element; // 입력으로 들어온 원소 하나
+		boolean newElement; // 지금 입력된 원소가 새로운 원소인가?
 		st = new StringTokenizer(br.readLine().trim());
+		
 		for(int idx = 0; idx < elementCount; idx++) {
-			int element = Integer.parseInt(st.nextToken());
-			elementList[element] = true;
+			element = Integer.parseInt(st.nextToken());
+			newElement = true; 
+			
+			// 앞에 중복된 값이 있는지 확인(n이 최대 7이라서 시간상 문제 x)
+			for(int preIdx = 0; preIdx < idx; preIdx++) {
+				if(element == elementList[preIdx]) {
+					newElement = false;
+					break;
+				}
+			}
+			
+			// 새로운 값이라면 원소 목록에 추가
+			if(newElement)
+				elementList[idx] = element;
 		}
 		
 		// 사전 순 출력을 위해 정렬
-//		Arrays.sort(elementList);
+		Arrays.sort(elementList);
 		
 		// 원소를 뽑아서 출력한다.
 		permutation(0);
@@ -44,29 +61,28 @@ public class Main {
 	}
 
 	private static void permutation(int selectIdx) {
-		// 기저조건
+		// 기저조건: 원하는 갯수만큼 원소들을 고른 경우
 		if(selectIdx == selectCount) {
+			// 출력
 			for(int idx = 0; idx < selectCount; idx++)
 				sb.append(selectElementList[idx]).append(" ");
 			sb.append("\n");
 			
+			// 다른 원소 뽑으러 돌아가기
 			return;
 		}
 		
-		// 다음 원소 고르기
+		
+		// 현재 위치(selectIdx)의 원소 고르기
 		for(int idx = 0; idx < elementList.length; idx++) {
-			if(!elementList[idx]) continue;
+			// 0은 유효한 원소가 아니다.
+			if(elementList[idx] == 0) continue;
 			
-			// 선택
-			selectElementList[selectIdx] = idx;
-//			elementList[idx]--;
-			
-			
+			selectElementList[selectIdx] = elementList[idx]; // 선택
+
 			permutation(selectIdx+1);
 			
-			// 복구
-//			elementList[idx]++;
-			selectElementList[selectIdx] = 0;
+			selectElementList[selectIdx] = 0; // 다음 선택을 위해 현 선택 복구
 		}
 	}
 
