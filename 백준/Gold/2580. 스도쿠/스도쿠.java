@@ -55,6 +55,8 @@ public class Main {
     }
 
     private static boolean solveSudoku(int blankIdx) {
+        boolean emptyFlag = true;
+
         // 모든 빈 칸을 채우면 종료
         if(blankIdx == blankList.size())
             return true;
@@ -64,22 +66,25 @@ public class Main {
         int[] curPoint = blankList.get(blankIdx);
 
         // 현재 칸에 들어갈 수 있는 후보들을 찾는다.
-        List<Integer> validValueList = findValidValue(curPoint[0], curPoint[1]);
-
-
-        // 현재 칸에 넣을 수 있는 값이 없다면 직전의 빈 칸으로 돌아가기
-        if(validValueList.isEmpty()) {
-            return false;
-        }
+        boolean[] validValueList = findValidValue(curPoint[0], curPoint[1]);
 
 
         // 순차적으로 값을 넣어본다.
-        for(int value : validValueList) {
-            sudoku[curPoint[0]][curPoint[1]] = value; // 현재 칸에 가능한 값을 넣어보기
+        for(int idx = 0; idx < validValueList.length; idx++) {
+            if(!validValueList[idx]) continue;
+
+            emptyFlag = false; // 뭐라도 값을 넣었음을 체크
+
+            sudoku[curPoint[0]][curPoint[1]] = idx; // 현재 칸에 가능한 값을 넣어보기
 
             // 다음 빈 칸으로 가기
             if(solveSudoku(blankIdx + 1))
                 return true; // 스도쿠가 완성되면 완전 종료
+        }
+
+        // 현재 칸에 넣을 수 있는 값이 없다면 직전의 빈 칸으로 돌아가기
+        if(emptyFlag) {
+            return false;
         }
 
         // 앞에 잘못된 값을 넣어서 후보값들을 전부 넣을 수 없는 경우
@@ -88,9 +93,9 @@ public class Main {
         return false;
     }
 
-    private static List<Integer> findValidValue(int row, int col) {
+    private static boolean[] findValidValue(int row, int col) {
         boolean[] checkUsedValue = new boolean[SUDOKU_SIZE + 1]; // 이미 사용된 값 체크
-        List<Integer> validValue = new ArrayList<>(); // 사용할 수 있는 값 리스트
+        boolean[] validValue = new boolean[SUDOKU_SIZE + 1]; // 사용할 수 있는 값 리스트
 
         // 행 체크
         for(int colIdx = 0; colIdx < SUDOKU_SIZE; colIdx++) {
@@ -111,7 +116,7 @@ public class Main {
 
         // 사용되지 않은 값만 추려서 리스트에 저장
         for (int idx = 0; idx < checkUsedValue.length; idx++) {
-            if(!checkUsedValue[idx]) validValue.add(idx);
+            if(!checkUsedValue[idx]) validValue[idx] = true;
         }
 
 
